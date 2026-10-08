@@ -8,4 +8,6 @@ public interface AccountDAO {
     void withdraw(long accountNumber, BigDecimal amount);
     void transfer(long fromAccount, long toAccount, BigDecimal amount);
     void printStatement(long accountNumber);
+
+    void createAccount(long accountNumber, int customerId, String accountType, BigDecimal initialDeposit);
 }

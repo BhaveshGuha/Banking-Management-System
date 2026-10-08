@@ -164,26 +164,32 @@ public class AccountDAOImpl implements AccountDAO {
 
     @Override
     public void printStatement(long accountNumber) {
-        String sql = "SELECT transaction_id, transaction_type, amount, target_account_number, timestamp " +
-                "FROM transactions WHERE account_number = ? ORDER BY timestamp DESC LIMIT 10";
+
+    }
+
+    @Override
+    public void createAccount(long accountNumber, int customerId, String accountType, BigDecimal initialDeposit) {
+        if (initialDeposit.compareTo(BigDecimal.ZERO) < 0) {
+            System.out.println("Initial deposit cannot be negative.");
+            return;
+        }
+
+        String sql = "INSERT INTO accounts (account_number, customer_id, account_type, balance, status) VALUES (?, ?, ?, ?, 'ACTIVE')";
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, accountNumber);
-            ResultSet rs = ps.executeQuery();
 
-            System.out.println("\n--- Mini Statement for Account: " + accountNumber + " ---");
-            System.out.printf("%-6s | %-12s | %-10s | %-12s | %-20s\n", "ID", "Type", "Amount", "Target Acc", "Timestamp");
-            System.out.println("----------------------------------------------------------------------");
-            while (rs.next()) {
-                System.out.printf("%-6d | %-12s | $%-9.2f | %-12s | %-20s\n",
-                        rs.getInt("transaction_id"),
-                        rs.getString("transaction_type"),
-                        rs.getBigDecimal("amount"),
-                        rs.getObject("target_account_number") != null ? rs.getLong("target_account_number") : "-",
-                        rs.getTimestamp("timestamp"));
+            ps.setLong(1, accountNumber);
+            ps.setInt(2, customerId);
+            ps.setString(3, accountType.toUpperCase());
+            ps.setBigDecimal(4, initialDeposit);
+
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                System.out.println("Account created successfully with Account Number: " + accountNumber);
             }
         } catch (SQLException e) {
-            System.err.println("Statement error: " + e.getMessage());
+            System.err.println("Failed to create account: " + e.getMessage());
         }
     }
 }
